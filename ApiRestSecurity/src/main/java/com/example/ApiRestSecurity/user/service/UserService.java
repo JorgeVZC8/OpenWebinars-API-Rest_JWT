@@ -5,7 +5,6 @@ import com.example.ApiRestSecurity.user.model.UserEntity;
 import com.example.ApiRestSecurity.user.model.UserRole;
 import com.example.ApiRestSecurity.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +19,7 @@ public class UserService {
 
     public UserEntity createUser(CreateUserRequest request, Set<UserRole> roles){
         UserEntity user= UserEntity.builder()
-                .userName(request.getUserName())
+                .userName(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .avatar(request.getAvatar())
                 .fullName(request.getFullName())
@@ -74,5 +73,9 @@ public class UserService {
 
     public void delete(UserEntity user) {
         deleteById(user.getId());
+    }
+
+    public boolean passwordMatch(UserEntity user, String clearPassword){
+        return passwordEncoder.matches(clearPassword, user.getPassword());
     }
 }

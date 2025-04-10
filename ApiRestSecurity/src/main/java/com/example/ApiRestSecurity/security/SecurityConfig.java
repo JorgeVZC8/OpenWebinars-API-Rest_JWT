@@ -2,6 +2,8 @@ package com.example.ApiRestSecurity.security;
 
 import com.example.ApiRestSecurity.security.errorHandling.JwtAccessDeniedHandler;
 import com.example.ApiRestSecurity.security.errorHandling.JwtAuthenticationEntryPoint;
+import com.example.ApiRestSecurity.security.jwt.JwtAuthenticationFilter;
+import com.example.ApiRestSecurity.user.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,9 +13,9 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
 @Configuration
@@ -21,10 +23,11 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final UserDetailsService userDetailsService;
+    private final CustomUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
     private final JwtAuthenticationEntryPoint entryPoint;
     private final JwtAccessDeniedHandler accessDeniedHandler;
+    private final JwtAuthenticationFilter filter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -38,15 +41,18 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Aplicación sin estado
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/h2-console/**", "/auth/register").permitAll()
+                        .requestMatchers("/h2-console/**", "/auth/register", "/auth/login").permitAll()
                         .requestMatchers("/note/**").hasRole("USER") // Restringir "/note/**" a USER
                         .requestMatchers("/auth/register/admin/").hasRole("ADMIN") // Restringir "/auth/register/admin/" a ADMIN
                         .anyRequest().authenticated() // Cualquier otra petición requiere autenticación
                 )
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .headers(headers -> headers.frameOptions(frame -> frame.disable())) // Deshabilitar opciones de frame
                 .build();
     }
 
+    @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)throws Exception{
         return authenticationConfiguration.getAuthenticationManager();
     }

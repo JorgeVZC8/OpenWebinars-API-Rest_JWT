@@ -1,16 +1,23 @@
 package com.example.ApiRestSecurity.user.controller;
 
-import com.example.ApiRestSecurity.user.dto.CreateUserRequest;
-import com.example.ApiRestSecurity.user.dto.UserResponse;
+import com.example.ApiRestSecurity.security.jwt.JwtProvider;
+import com.example.ApiRestSecurity.user.dto.*;
 import com.example.ApiRestSecurity.user.model.UserEntity;
 import com.example.ApiRestSecurity.user.service.UserService;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,6 +27,8 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService service;
+    private final AuthenticationManager authenticationManager;
+    private final JwtProvider jwtProvider;
 
     @PostMapping("/auth/register")
     public ResponseEntity<UserResponse> createUserWithUserRole(@RequestBody CreateUserRequest request){
@@ -79,6 +88,45 @@ public class UserController {
         }catch (UsernameNotFoundException e){
             return ResponseEntity.notFound().build();
         }
+    }
+    @PostMapping("/auth/login")
+    public ResponseEntity<JwtUserResponse> login(@RequestBody LoginRequest loginRequest){
+        //Realizamos la autenticacion
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsername(),
+                        loginRequest.getPassword()
+                )
+        );
+
+        //Una vez realizada la autenticacion la guardamos en el contexto de seguridad
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        String token = jwtProvider.generateToken(authentication);
+
+        UserEntity user=(UserEntity) authentication.getPrincipal();
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(JwtUserResponse.of(user, token));
+
+    }
+
+    @PutMapping("/user/changePassword")
+    public ResponseEntity<UserResponse> changePassword(@RequestBody ChangePasswordRequest request, @AuthenticationPrincipal  UserEntity loggedUser){
+        try{
+            if(service.passwordMatch(loggedUser, request.getOldPassword())){
+                Optional<UserEntity> modified= service.editPassword(loggedUser.getId(), request.getNewPassword());
+                if(modified.isPresent()){
+                    return ResponseEntity.ok(UserResponse.fromUser(modified.get()));
+                }else{
+                    throw new RuntimeException();
+                }
+            }
+        }catch (RuntimeException exception){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password data error");
+        }
+
+        return null;
     }
 
 }

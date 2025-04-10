@@ -2,8 +2,10 @@ package com.example.ApiRestSecurity.note.controller;
 
 import com.example.ApiRestSecurity.note.model.Note;
 import com.example.ApiRestSecurity.note.repositories.NoteRepository;
+import com.example.ApiRestSecurity.user.model.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -18,8 +20,9 @@ public class NoteController {
     private final NoteRepository repository;
 
     @GetMapping
-    public ResponseEntity<List<Note>> getAll(){
-        return buildResponseOfAList(repository.findAll());
+    public ResponseEntity<List<Note>> getAll(@AuthenticationPrincipal UserEntity user){
+        //return buildResponseOfAList(repository.findAll());
+        return buildResponseOfAList(repository.findByAuthor(user.getId().toString()));
     }
 
     @GetMapping("/{id}")

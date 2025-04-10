@@ -6,19 +6,20 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@SuperBuilder
 public class UserResponse {
 
-    private String id;
-    private String username, avatar, fullName;
+    protected String id;
+    protected String username, avatar, fullName;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
-    private LocalDateTime createdAt;
+    protected LocalDateTime createdAt;
 
 
     public static UserResponse fromUser(UserEntity user){

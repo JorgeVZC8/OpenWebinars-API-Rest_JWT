@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CreateUserRequest {
-
-    private String username, password, verifyPassword, avatar, fullName;
+public class ChangePasswordRequest {
+    private String oldPassword;
+    private String newPassword;
+    private String verifyPassword;
 }

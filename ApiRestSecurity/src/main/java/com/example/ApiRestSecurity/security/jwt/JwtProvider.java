@@ -17,6 +17,7 @@ import java.util.Date;
 import javax.crypto.SecretKey;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.UUID;
 
 @Service
 @Log
@@ -68,12 +69,19 @@ public class JwtProvider {
 
     public boolean validateToken(String token){
         try{
-            jwtParser.parseClaimsJwt(token);
+            jwtParser.parseClaimsJws(token);
             return true;
         }catch(SignatureException | MalformedJwtException | ExpiredJwtException | UnsupportedJwtException | IllegalArgumentException exception){
             log.info("Error con el token" + exception.getMessage());
         }
+
         return false;
+    }
+
+    public UUID getUserIdFromJwtToken(String token){
+        return UUID.fromString(
+                jwtParser.parseClaimsJws(token).getBody().getSubject()
+        );
     }
 
 }
