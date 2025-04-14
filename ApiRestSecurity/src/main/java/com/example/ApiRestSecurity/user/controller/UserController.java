@@ -4,7 +4,6 @@ import com.example.ApiRestSecurity.security.jwt.JwtProvider;
 import com.example.ApiRestSecurity.user.dto.*;
 import com.example.ApiRestSecurity.user.model.UserEntity;
 import com.example.ApiRestSecurity.user.service.UserService;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +15,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,10 +23,12 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserController {
 
+    //Inyectamos las dependencias necesarias
     private final UserService service;
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
 
+    //Este endpoint sirve para guardar un nuevo usuario con rol USER y sera publico para todo el mundo
     @PostMapping("/auth/register")
     public ResponseEntity<UserResponse> createUserWithUserRole(@RequestBody CreateUserRequest request){
         UserEntity user= service.createUserWithUserRole(request);
@@ -38,6 +37,7 @@ public class UserController {
                 .body(UserResponse.fromUser(user));
     }
 
+    //Este endpoint sirve para guardar un nuevo usuario con rol ADMIN. Solo ADMIN
     @PostMapping("/auth/register/admin")
     public ResponseEntity<UserResponse> createUserWithAdminRole(@RequestBody CreateUserRequest request){
         UserEntity user= service.createUserWithAdminRole(request);
@@ -46,6 +46,7 @@ public class UserController {
                 .body(UserResponse.fromUser(user));
     }
 
+    //Este endpoint sirve para buscar un usuario por su id. Solo ADMIN
     @GetMapping("/id/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable String id){
             UserEntity user= service.findById(UUID.fromString(id))
@@ -53,6 +54,7 @@ public class UserController {
             return ResponseEntity.ok(UserResponse.fromUser(user));
     }
 
+    //Este endpoint sirve para listar todos los usuarios. Solo ADMIN
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers(){
         return ResponseEntity.ok(
@@ -61,6 +63,7 @@ public class UserController {
                         .toList());
     }
 
+    //Este endpoint sirve para buscar un usuario por su username. Solo ADMIN
     @GetMapping("/username/{username}")
     public ResponseEntity<UserResponse> getUserByUserName(@PathVariable String username){
         UserEntity user= service.findByUserName(username)
@@ -68,18 +71,22 @@ public class UserController {
         return ResponseEntity.ok(UserResponse.fromUser(user));
     }
 
+    //Permite editar los datos de un usuario como su username o el avatar. Solo usuario loggeadp
     @PutMapping("/edit/{id}")
     public ResponseEntity<UserResponse> edit(@PathVariable String id, @RequestBody UserEntity user){
         UserEntity u= service.edit(id, user).orElseThrow(()-> new UsernameNotFoundException("User not found"));
         return ResponseEntity.ok(UserResponse.fromUser(u));
     }
 
+    //Permite editar la contraseña de un usuario. en caso de implementarse solo ADMIN
+    /*
     @PutMapping("/edit-password/{id}")
     public ResponseEntity<UserResponse> editPassword(@PathVariable String id, @RequestBody String newPassword){
         UserEntity u= service.editPassword(UUID.fromString(id), newPassword).orElseThrow(()-> new UsernameNotFoundException("User not found"));
         return ResponseEntity.ok(UserResponse.fromUser(u));
-    }
+    }*/
 
+    //Permite al usuario logeado editar eliminar su cuenta. Los ADMIN tambien podran tener acceso a este endpoint
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> delete(@PathVariable String id){
         try{
@@ -89,6 +96,8 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    //Permite a los usuarios registrados logearse a partir de sus credenciales y genera un token
     @PostMapping("/auth/login")
     public ResponseEntity<JwtUserResponse> login(@RequestBody LoginRequest loginRequest){
         //Realizamos la autenticacion
@@ -111,6 +120,7 @@ public class UserController {
 
     }
 
+    //Permite al usuario logeado cambiar su propia contraseña
     @PutMapping("/user/changePassword")
     public ResponseEntity<UserResponse> changePassword(@RequestBody ChangePasswordRequest request, @AuthenticationPrincipal  UserEntity loggedUser){
         try{

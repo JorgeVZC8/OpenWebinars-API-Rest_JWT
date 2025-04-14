@@ -1,10 +1,7 @@
 package com.example.ApiRestSecurity.user.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.NaturalId;
 import org.hibernate.annotations.Parameter;
@@ -26,6 +23,7 @@ import static jakarta.persistence.FetchType.EAGER;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 @Builder
 @Table(name = "user_entity")
 @EntityListeners(AuditingEntityListener.class)

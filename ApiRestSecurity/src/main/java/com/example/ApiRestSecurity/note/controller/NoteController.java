@@ -5,6 +5,7 @@ import com.example.ApiRestSecurity.note.repositories.NoteRepository;
 import com.example.ApiRestSecurity.user.model.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -36,7 +37,7 @@ public class NoteController {
     }
 
     @PostMapping
-    public ResponseEntity<Note> saveNote(Note note){
+    public ResponseEntity<Note> saveNote(@RequestBody Note note){
         Note created= repository.save(note);
 
         URI createdURI= ServletUriComponentsBuilder
@@ -50,13 +51,17 @@ public class NoteController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("""
+            @noteRepository.findById(#id)
+                .orElse(new com.example.ApiRestSecurity.note.model.Note())
+                .author == authentication.principal.getId().toString()
+            """)
     public ResponseEntity<Note> edit(@PathVariable Long id, @RequestBody Note note){
         return ResponseEntity.of(
                 repository.findById(id)
                         .map(editNote->{
                             editNote.setTitle(note.getTitle());
                             editNote.setContent(note.getContent());
-                            editNote.setAuthor(note.getAuthor());
                             editNote.setImportant(note.isImportant());
                             return repository.save(editNote);
                         })
